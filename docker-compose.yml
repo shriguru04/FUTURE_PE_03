@@ -1,0 +1,20 @@
+services:
+  db:
+    image: postgres:16
+    environment: { POSTGRES_USER: seo, POSTGRES_PASSWORD: seo_dev_password, POSTGRES_DB: seo }
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck: { test: ["CMD-SHELL", "pg_isready -U seo"], interval: 5s, retries: 10 }
+  api:
+    build: ./backend
+    environment:
+      APP_ENV: production
+      DATABASE_URL: postgresql+psycopg://seo:seo_dev_password@db:5432/seo
+      SECRET_KEY: ${SECRET_KEY:?set SECRET_KEY in your shell or .env}
+      CORS_ORIGINS: http://localhost:5173
+      AI_PROVIDER: ${AI_PROVIDER:-mock}
+      AI_MODEL: ${AI_MODEL:-}
+      AI_API_KEY: ${AI_API_KEY:-}
+      AI_BASE_URL: ${AI_BASE_URL:-https://api.openai.com/v1}
+    depends_on: { db: { condition: service_healthy } }
+    ports: ["8000:8000"]
+volumes: { pgdata: {} }
